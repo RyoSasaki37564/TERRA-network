@@ -1,0 +1,206 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
+using UnityEngine.UI;
+using ExitGames.Client.Photon;
+using Photon.Pun;
+using Photon.Realtime;
+using Photon.Pun.UtilityScripts;
+
+/// <summary>
+/// カードゲームのシステムを提供するコンポーネント
+/// 途中で抜けられた時の処理を考慮していない
+/// </summary>
+[RequireComponent(typeof(PunTurnManager))]
+public class CardGameManager : MonoBehaviour, IPunTurnManagerCallbacks, IOnEventCallback
+{
+    /// <summary>山札。マスタークライアントが管理する。</summary>
+    List<Card> _stock = new List<Card>();
+    /// <summary>手札。各クライアントが管理する。</summary>
+    List<Card> _hand = new List<Card>();
+    /// <summary>捨てた札。各クライアントが管理する。</summary>
+    List<Card> _discard = new List<Card>();
+
+    void Start()
+    {
+        //InitializeCards();
+    }
+
+    //public void StartGame()
+    //{
+    //    if (PhotonNetwork.IsMasterClient)
+    //    {
+    //        InitializeCards();
+    //    }
+
+    //    int playerId = Array.IndexOf(PhotonNetwork.PlayerList, PhotonNetwork.LocalPlayer);
+
+    //    // 最初の手札を引く
+    //    for (int i = 0; i < playerId + 3; i++)
+    //    {
+    //        Draw(PhotonNetwork.LocalPlayer.ActorNumber);
+    //    }
+    //}
+
+    /// <summary>
+    /// 山札を準備し、シャッフルする
+    /// </summary>
+    public void InitializeCards()
+    {
+        Debug.Log("Shuffle Cards.");
+        var allsuits = (Suit[]) Enum.GetValues(typeof(Suit));
+
+        foreach (var suit in allsuits)
+        {
+            for (int i = 1; i <= 13; i++)
+            {
+                _stock.Add(new Card(suit, i));
+            }
+        }
+
+        _stock = _stock.OrderBy(c => Guid.NewGuid()).ToList();
+    }
+
+    /// <summary>
+    /// 山札から一枚カードを引く
+    /// </summary>
+    /// <param name="actorNumber"></param>
+    public void Draw(int actorNumber)
+    {
+        RaiseEventOptions eventOptions = new RaiseEventOptions();
+        eventOptions.Receivers = ReceiverGroup.MasterClient;
+        SendOptions sendOptions = new SendOptions();
+        sendOptions.Encrypt = true;
+        PhotonNetwork.RaiseEvent((byte)GameEvent.Draw, null, eventOptions, sendOptions);
+    }
+
+    /// <summary>
+    /// マスタークライアントでのみ呼び出される。対象のクライアントに札を配布する。
+    /// </summary>
+    /// <param name="actorNumber"></param>
+    void Distribute(int actorNumber)
+    {
+        // 山からカードを一枚選ぶ
+        var card = _stock[UnityEngine.Random.Range(0, _stock.Count)];
+        // 山から削除する
+        _stock.Remove(card);
+        // 対象のクライアントに引いたカードを通知する
+        RaiseEventOptions eventOptions = new RaiseEventOptions();
+        eventOptions.TargetActors = new int[] { actorNumber };
+        SendOptions sendOptions = new SendOptions();
+        sendOptions.Encrypt = true;
+        object[] content = new object[] { card.Suit.ToString(), card.Number.ToString() };
+        Debug.Log($"Raise Event ID:{GameEvent.Distribute.ToString()}, Suit: {card.Suit.ToString()}, Number: {card.Number}, TargetActor: {actorNumber}");
+        PhotonNetwork.RaiseEvent((byte)GameEvent.Distribute, content, eventOptions, sendOptions);
+    }
+
+    #region IPunTurnManagerCallbacks の実装
+
+    /// <summary>
+    /// ターン開始時に呼び出される
+    /// </summary>
+    /// <param name="turn">ターン番号 (1, 2, 3, ...)</param>
+    void IPunTurnManagerCallbacks.OnTurnBegins(int turn)
+    {
+        Debug.LogFormat("OnTurnBegins {0}", turn);
+
+        if (turn == 1 && PhotonNetwork.IsMasterClient)
+        {
+            InitializeCards();
+
+            // 最初の手札を配る
+            for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
+            {
+                for (int j = 0; j < 3 + i; j++)
+                {
+                    Distribute(PhotonNetwork.PlayerList[i].ActorNumber);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// プレイヤーが行動終了したら呼び出される
+    /// </summary>
+    /// <param name="player">行動終了したプレイヤーの情報</param>
+    /// <param name="turn"></param>
+    /// <param name="move">プレイヤーが送ったメッセージ</param>
+    void IPunTurnManagerCallbacks.OnPlayerFinished(Photon.Realtime.Player player, int turn, object move)
+    {
+        Debug.LogFormat($"OnPlayerFinished from Player: {player.ActorNumber}, move: {move}, for turn: {turn}");
+
+        //if (!this.OnPlayerFinished())
+        //{
+        //    // 自分が MasterClient ではなくて、一つ前の ActorNumber の人が行動終了した時に
+        //    if (!PhotonNetwork.IsMasterClient && PhotonNetwork.LocalPlayer.ActorNumber == player.ActorNumber + 1)
+        //    {
+        //        // 自分のターンとみなす
+        //        this.BeginTurn();
+        //    }
+        //}
+    }
+
+    /// <summary>
+    /// プレイヤーが PunTurnManager.SendMove を呼び出したが、行動を終了していない時
+    /// </summary>
+    /// <param name="player">SendMove を呼び出したプレイヤーの情報</param>
+    /// <param name="turn"></param>
+    /// <param name="move">プレイヤーが送ったメッセージ</param>
+    void IPunTurnManagerCallbacks.OnPlayerMove(Photon.Realtime.Player player, int turn, object move)
+    {
+        Debug.LogFormat($"OnPlayerMove received from Player: {player.ActorNumber}, move: {move.ToString()} for turn {turn}");
+        //this.OnPlayerMove(move);
+    }
+
+    /// <summary>
+    /// 参加しているプレイヤー全員が行動を終了した時に呼び出される
+    /// </summary>
+    /// <param name="turn">ターン番号</param>
+    void IPunTurnManagerCallbacks.OnTurnCompleted(int turn)
+    {
+        Debug.LogFormat("OnTurnCompleted {0}", turn);
+        // 新たなターンを開始する
+        PunTurnManager turnManager = GameObject.FindObjectOfType<PunTurnManager>();
+        turnManager.BeginTurn();
+    }
+
+    /// <summary>
+    /// ターンが時間切れになった時に呼び出される
+    /// </summary>
+    /// <param name="turn"></param>
+    void IPunTurnManagerCallbacks.OnTurnTimeEnds(int turn)
+    {
+        Debug.LogFormat("OnTurnTimeEnds {0}", turn);
+        // 新たなターンを開始する
+        PunTurnManager turnManager = GameObject.FindObjectOfType<PunTurnManager>();
+        turnManager.BeginTurn();
+    }
+
+    #endregion
+
+    #region IOnEventCallback の実装
+
+    void IOnEventCallback.OnEvent(ExitGames.Client.Photon.EventData photonEvent)
+    {
+        if (photonEvent.Code > 200) return;
+        Debug.Log(photonEvent.Code.ToString());
+
+        if (photonEvent.Code == (byte)GameEvent.Draw)   // マスタークライアントのみ受け取る
+        {
+            Distribute(photonEvent.Sender);
+        }
+        else if (photonEvent.Code == (byte)GameEvent.Distribute)
+        {
+            string suit = ((object[])photonEvent.CustomData)[0].ToString();
+            string number = ((object[])photonEvent.CustomData)[1].ToString();
+            Debug.Log($"Event Received. Code: Distribute, Suit: {suit}, Number: {number}");
+            Suit s = (Suit)Enum.Parse(typeof(Suit), suit);
+            Card card = new Card(s, int.Parse(number));
+            _hand.Add(card);
+        }
+    }
+
+    #endregion
+}
