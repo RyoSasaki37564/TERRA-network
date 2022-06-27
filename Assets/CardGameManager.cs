@@ -14,7 +14,7 @@ using Photon.Pun.UtilityScripts;
 /// 途中で抜けられた時の処理を考慮していない
 /// </summary>
 [RequireComponent(typeof(PunTurnManager))]
-public class CardGameManager : MonoBehaviour, IPunTurnManagerCallbacks, IOnEventCallback
+public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbacks, IOnEventCallback
 {
     /// <summary>山札。マスタークライアントが管理する。</summary>
     List<Card> _stock = new List<Card>();
@@ -185,7 +185,6 @@ public class CardGameManager : MonoBehaviour, IPunTurnManagerCallbacks, IOnEvent
     void IOnEventCallback.OnEvent(ExitGames.Client.Photon.EventData photonEvent)
     {
         if (photonEvent.Code > 200) return;
-        Debug.Log(photonEvent.Code.ToString());
 
         if (photonEvent.Code == (byte)GameEvent.Draw)   // マスタークライアントのみ受け取る
         {
@@ -198,7 +197,17 @@ public class CardGameManager : MonoBehaviour, IPunTurnManagerCallbacks, IOnEvent
             Debug.Log($"Event Received. Code: Distribute, Suit: {suit}, Number: {number}");
             Suit s = (Suit)Enum.Parse(typeof(Suit), suit);
             Card card = new Card(s, int.Parse(number));
+            // カードを手札に加える
             _hand.Add(card);
+            // 画面に出す
+            var hand = GameObject.Find("Hand " + PhotonNetwork.LocalPlayer.ActorNumber);
+            if (hand)
+            {
+                Debug.Log($"{hand.name} found.");
+            }
+            var go = PhotonNetwork.Instantiate("Card", Vector3.zero, Quaternion.identity);
+            go.transform.SetParent(hand.transform);
+            go.GetComponent<CardController>().SetImage(card);
         }
     }
 
