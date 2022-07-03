@@ -22,33 +22,18 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
     List<Card> _hand = new List<Card>();
     /// <summary>捨てた札。各クライアントが管理する。</summary>
     List<Card> _discard = new List<Card>();
-
-    void Start()
-    {
-        //InitializeCards();
-    }
-
-    //public void StartGame()
-    //{
-    //    if (PhotonNetwork.IsMasterClient)
-    //    {
-    //        InitializeCards();
-    //    }
-
-    //    int playerId = Array.IndexOf(PhotonNetwork.PlayerList, PhotonNetwork.LocalPlayer);
-
-    //    // 最初の手札を引く
-    //    for (int i = 0; i < playerId + 3; i++)
-    //    {
-    //        Draw(PhotonNetwork.LocalPlayer.ActorNumber);
-    //    }
-    //}
+    /// <summary>自分が何番目のプレイヤーか（0スタート。途中抜けを考慮していない）</summary>
+    int _playerIndex = -1;
+    /// <summary>現在何番目のプレイヤーが操作をしているか（0スタート。途中抜けを考慮していない）</summary>
+    int _activePlayerIndex = -1;
 
     /// <summary>
     /// 山札を準備し、シャッフルする
     /// </summary>
     public void InitializeCards()
     {
+        Debug.Log("Initialize Game...");
+        _playerIndex = Array.IndexOf(PhotonNetwork.PlayerList, PhotonNetwork.LocalPlayer);
         Debug.Log("Shuffle Cards.");
         var allsuits = (Suit[]) Enum.GetValues(typeof(Suit));
 
@@ -96,6 +81,16 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
         PhotonNetwork.RaiseEvent((byte)GameEvent.Distribute, content, eventOptions, sendOptions);
     }
 
+    /// <summary>
+    /// カードを捨てる
+    /// </summary>
+    /// <param name="card"></param>
+    public void Discard(Card card)
+    {
+        _hand.Remove(card);
+        _discard.Add(card);
+    }
+
     #region IPunTurnManagerCallbacks の実装
 
     /// <summary>
@@ -105,6 +100,7 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
     void IPunTurnManagerCallbacks.OnTurnBegins(int turn)
     {
         Debug.LogFormat("OnTurnBegins {0}", turn);
+        _activePlayerIndex = 0;
 
         if (turn == 1 && PhotonNetwork.IsMasterClient)
         {
@@ -118,7 +114,12 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
                     Distribute(PhotonNetwork.PlayerList[i].ActorNumber);
                 }
             }
+
+            // 最初のプレイヤーに札を配る
+            Distribute(PhotonNetwork.PlayerList[_activePlayerIndex].ActorNumber);
         }
+
+        // TODO: 順番のプレイヤーは操作できるように、順番以外のプレイヤーは操作できないようにする（パネルでクリックを塞いでしまえばよい）
     }
 
     /// <summary>
@@ -130,16 +131,14 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
     void IPunTurnManagerCallbacks.OnPlayerFinished(Photon.Realtime.Player player, int turn, object move)
     {
         Debug.LogFormat($"OnPlayerFinished from Player: {player.ActorNumber}, move: {move}, for turn: {turn}");
+        _activePlayerIndex = (_activePlayerIndex + 1) % PhotonNetwork.CurrentRoom.PlayerCount;
+        // 順番のプレイヤーに札を配る
+        if (PhotonNetwork.IsMasterClient)
+        {
+            Distribute(PhotonNetwork.PlayerList[_activePlayerIndex].ActorNumber);
+        }
 
-        //if (!this.OnPlayerFinished())
-        //{
-        //    // 自分が MasterClient ではなくて、一つ前の ActorNumber の人が行動終了した時に
-        //    if (!PhotonNetwork.IsMasterClient && PhotonNetwork.LocalPlayer.ActorNumber == player.ActorNumber + 1)
-        //    {
-        //        // 自分のターンとみなす
-        //        this.BeginTurn();
-        //    }
-        //}
+        // TODO: 順番のプレイヤーは操作できるように、順番以外のプレイヤーは操作できないようにする（パネルでクリックを塞いでしまえばよい）
     }
 
     /// <summary>
@@ -188,7 +187,10 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
 
         if (photonEvent.Code == (byte)GameEvent.Draw)   // マスタークライアントのみ受け取る
         {
-            Distribute(photonEvent.Sender);
+            if (PhotonNetwork.IsMasterClient)
+            {
+                Distribute(photonEvent.Sender);
+            }
         }
         else if (photonEvent.Code == (byte)GameEvent.Distribute)
         {
@@ -199,15 +201,10 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
             Card card = new Card(s, int.Parse(number));
             // カードを手札に加える
             _hand.Add(card);
-            // 画面に出す
-            var hand = GameObject.Find("Hand " + PhotonNetwork.LocalPlayer.ActorNumber);
-            if (hand)
-            {
-                Debug.Log($"{hand.name} found.");
-            }
             var go = PhotonNetwork.Instantiate("Card", Vector3.zero, Quaternion.identity);
-            go.transform.SetParent(hand.transform);
-            go.GetComponent<CardController>().SetImage(card);
+            var cardController = go.GetComponent<CardController>();
+            cardController.SetImage(card);
+            cardController.SetCardToHand(PhotonNetwork.LocalPlayer.ActorNumber);
         }
     }
 
