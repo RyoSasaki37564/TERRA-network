@@ -4,10 +4,10 @@ using UnityEngine;
 
 public class PlayerData : MonoBehaviour
 {
-    public Suit _biome;
+    public Biome _biome;
 
-    public void StandUp(Suit s)
+    public void StandUp(Biome b)
     {
-        _biome = s;
+        _biome = b;
     }
 }
