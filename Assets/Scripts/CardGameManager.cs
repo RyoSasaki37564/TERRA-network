@@ -35,7 +35,7 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
         Debug.Log("Initialize Game...");
         _playerIndex = Array.IndexOf(PhotonNetwork.PlayerList, PhotonNetwork.LocalPlayer);
         Debug.Log("Shuffle Cards.");
-        var allsuits = (Biorm[]) Enum.GetValues(typeof(Biorm));
+        var allsuits = (Biome[]) Enum.GetValues(typeof(Biome));
 
         foreach (var suit in allsuits)
         {
@@ -197,7 +197,7 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
             string suit = ((object[])photonEvent.CustomData)[0].ToString();
             string number = ((object[])photonEvent.CustomData)[1].ToString();
             Debug.Log($"Event Received. Code: Distribute, Suit: {suit}, Number: {number}");
-            Biorm s = (Biorm)Enum.Parse(typeof(Biorm), suit);
+            Biome s = (Biome)Enum.Parse(typeof(Biome), suit);
             Card card = new Card(s, int.Parse(number));
             // カードを手札に加える
             _hand.Add(card);
