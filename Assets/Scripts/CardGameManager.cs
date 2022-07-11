@@ -35,9 +35,9 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
         Debug.Log("Initialize Game...");
         _playerIndex = Array.IndexOf(PhotonNetwork.PlayerList, PhotonNetwork.LocalPlayer);
         Debug.Log("Shuffle Cards.");
-        var allsuits = (Suit[]) Enum.GetValues(typeof(Suit));
+        var allsuits = (Biome[]) Enum.GetValues(typeof(Biome));
 
-        foreach (var suit in allsuits)
+        foreach (var suit in allsuits)//全通りのカードを山札にAdd
         {
             for (int i = 1; i <= 13; i++)
             {
@@ -45,7 +45,7 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
             }
         }
 
-        _stock = _stock.OrderBy(c => Guid.NewGuid()).ToList();
+        _stock = _stock.OrderBy(c => Guid.NewGuid()).ToList();//昇順ソート
     }
 
     /// <summary>
@@ -192,12 +192,12 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
                 Distribute(photonEvent.Sender);
             }
         }
-        else if (photonEvent.Code == (byte)GameEvent.Distribute)
+        else if (photonEvent.Code == (byte)GameEvent.Distribute)//分配
         {
             string suit = ((object[])photonEvent.CustomData)[0].ToString();
             string number = ((object[])photonEvent.CustomData)[1].ToString();
             Debug.Log($"Event Received. Code: Distribute, Suit: {suit}, Number: {number}");
-            Suit s = (Suit)Enum.Parse(typeof(Suit), suit);
+            Biome s = (Biome)Enum.Parse(typeof(Biome), suit);
             Card card = new Card(s, int.Parse(number));
             // カードを手札に加える
             _hand.Add(card);

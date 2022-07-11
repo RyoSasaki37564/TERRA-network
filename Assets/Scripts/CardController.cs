@@ -17,7 +17,7 @@ using Photon.Pun.UtilityScripts;
 public class CardController : MonoBehaviour
 {
     /// <summary>カードの内容</summary>
-    Card _card = new Card(Suit.Spade, 1);
+    Card _card = new Card(Biome.Ocean, 1);
     /// <summary>カードの画像（裏返している時は裏向きの画像）</summary>
     Image _image;
     PhotonView _view;
@@ -99,7 +99,7 @@ public class CardController : MonoBehaviour
     [PunRPC]
     public void SetImage(string suit, int number)
     {
-        Suit s = (Suit)Enum.Parse(typeof(Suit), suit);
+        Biome s = (Biome)Enum.Parse(typeof(Biome), suit);
         _card = new Card(s, number);
         SetImage();
     }
