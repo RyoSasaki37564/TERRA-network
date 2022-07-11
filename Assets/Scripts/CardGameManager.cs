@@ -24,6 +24,8 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
     List<Card> _discard = new List<Card>();
     /// <summary>自分が何番目のプレイヤーか（0スタート。途中抜けを考慮していない）</summary>
     int _playerIndex = -1;
+    Biome _playerBiome = Biome.None;
+    public Biome PlayerBiome => _playerBiome;
     /// <summary>現在何番目のプレイヤーが操作をしているか（0スタート。途中抜けを考慮していない）</summary>
     int _activePlayerIndex = -1;
 
@@ -34,6 +36,7 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
     {
         Debug.Log("Initialize Game...");
         _playerIndex = Array.IndexOf(PhotonNetwork.PlayerList, PhotonNetwork.LocalPlayer);
+        _playerBiome = (Biome)_playerIndex;
         Debug.Log("Shuffle Cards.");
         var allsuits = (Biome[]) Enum.GetValues(typeof(Biome));
 
@@ -204,7 +207,7 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
             var go = PhotonNetwork.Instantiate("Card", Vector3.zero, Quaternion.identity);
             var cardController = go.GetComponent<CardController>();
             cardController.SetImage(card);
-            cardController.SetCardToHand(PhotonNetwork.LocalPlayer.ActorNumber);
+            cardController.SetCardToHand(PhotonNetwork.LocalPlayer.ActorNumber,_playerBiome);
         }
     }
 

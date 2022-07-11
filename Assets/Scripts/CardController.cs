@@ -22,6 +22,9 @@ public class CardController : MonoBehaviour
     Image _image;
     PhotonView _view;
 
+    bool _discarded = false;
+    Biome _owner = Biome.None;
+
     void Awake()
     {
         _view = GetComponent<PhotonView>();
@@ -33,14 +36,21 @@ public class CardController : MonoBehaviour
     /// </summary>
     public void Discard()
     {
+        var go = GameObject.FindGameObjectWithTag("GameController");
+        var cardGameManager = go.GetComponent<CardGameManager>();
+        var turnManager = go.GetComponent<PunTurnManager>();
+        if (_discarded || _owner != cardGameManager.PlayerBiome)
+        {
+            return;
+        }
+        _discarded = true;
         // TODO: 自分のではないカードをクリックして捨てられないようにする
         // TODO: 捨てたカードはクリックしても何も起こらないようにする
-        var go = GameObject.FindGameObjectWithTag("GameController");
+
         var gameManager = go.GetComponent<CardGameManager>();
         gameManager.Discard(_card);
         SetCardToDiscard(PhotonNetwork.LocalPlayer.ActorNumber);
         // 捨てたことを通知する
-        var turnManager = go.GetComponent<PunTurnManager>();
         turnManager.SendMove(null, true);
     }
 
@@ -48,8 +58,11 @@ public class CardController : MonoBehaviour
     /// カードを手札にセットする
     /// </summary>
     /// <param name="playerIdx">プレイヤーのID（ActorNumber）</param>
-    public void SetCardToHand(int playerIdx)
+    public void SetCardToHand(int playerIdx,Biome biome)
     {
+        //持ち主を確定
+        _owner = biome;
+
         object[] parameters = { playerIdx, "Hand" };
         SetImage();
         _view.RPC(nameof(SetCardToDeck), RpcTarget.All, parameters);
@@ -62,6 +75,7 @@ public class CardController : MonoBehaviour
     public void SetCardToDiscard(int playerIdx)
     {
         object[] parameters = { playerIdx, "Discard" };
+        //①メソッド名、②呼び出しのターゲット、③①の引数
         _view.RPC(nameof(SetCardToDeck), RpcTarget.All, parameters);
         object[] parameters2 = { _card.Suit.ToString(), _card.Number };
         _view.RPC(nameof(SetImage), RpcTarget.All, parameters2);
@@ -124,7 +138,7 @@ public class CardController : MonoBehaviour
         print($"Set sprite {_card.ToString()} to image");
         if (sprites.Length == 0) Debug.LogError("Failed to load image");
         var sprite = Array.Find<Sprite>(sprites, s => s.name == _card.Suit.ToString() + " " + _card.Number.ToString("00"));
-        
+
         if (!sprite)
         {
             Debug.LogError("not found");
