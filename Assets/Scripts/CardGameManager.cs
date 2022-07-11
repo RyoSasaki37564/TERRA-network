@@ -37,7 +37,7 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
         Debug.Log("Shuffle Cards.");
         var allsuits = (Biome[]) Enum.GetValues(typeof(Biome));
 
-        foreach (var suit in allsuits)
+        foreach (var suit in allsuits)//全通りのカードを山札にAdd
         {
             for (int i = 1; i <= 13; i++)
             {
@@ -45,7 +45,7 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
             }
         }
 
-        _stock = _stock.OrderBy(c => Guid.NewGuid()).ToList();
+        _stock = _stock.OrderBy(c => Guid.NewGuid()).ToList();//昇順ソート
     }
 
     /// <summary>
@@ -192,7 +192,7 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
                 Distribute(photonEvent.Sender);
             }
         }
-        else if (photonEvent.Code == (byte)GameEvent.Distribute)
+        else if (photonEvent.Code == (byte)GameEvent.Distribute)//分配
         {
             string suit = ((object[])photonEvent.CustomData)[0].ToString();
             string number = ((object[])photonEvent.CustomData)[1].ToString();
