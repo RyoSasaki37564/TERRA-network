@@ -1,33 +1,33 @@
 public struct Card
 {
-	public Biorm Suit;
+	public Biome Suit;
 	public int Number; 
-	public CardType CardType;
+	public CardType Type;
 
-	public Card(Biorm suit, int number)
+	public Card(Biome suit, int number)
     {
 		Suit = suit;
 		Number = number;
-		CardType = CardType.Plant;
+		Type = CardType.Plant;
 		if(Number > 4 && Number <= 7)
         {
-			CardType = CardType.Prey;
+			Type = CardType.Prey;
 		}
 		else if(Number > 7 && Number <= 9)
         {
-			CardType = CardType.Predator;
+			Type = CardType.Predator;
         }
 		else if(Number == 10)
         {
-			CardType = CardType.PredatorTheTop;
+			Type = CardType.PredatorTheTop;
         }
 		else if(Number == 11)
         {
-			CardType = CardType.Disaster;
+			Type = CardType.Disaster;
         }
 		else if(Number == 12)
         {
-			CardType = CardType.Ark;
+			Type = CardType.Ark;
         }
 		else if(Number == 14)
         {
@@ -41,7 +41,7 @@ public struct Card
     }
 }
 
-public enum Biorm
+public enum Biome
 {
 	Savannah,
 	Snowfield,
