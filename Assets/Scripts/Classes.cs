@@ -4,6 +4,9 @@ public struct Card
 	public int Number; 
 	public CardType Type;
 
+	/// <summary>
+	/// カードのバイオームと数字を初期化するコンストラクタ
+	/// </summary>
 	public Card(Biome suit, int number)
     {
 		Suit = suit;
