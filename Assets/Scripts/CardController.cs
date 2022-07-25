@@ -23,7 +23,7 @@ public class CardController : MonoBehaviour
     PhotonView _view;
 
     bool _discarded = false;
-    Biome _owner = Biome.None;
+    Biome _owner ;
 
     void Awake()
     {
@@ -62,7 +62,7 @@ public class CardController : MonoBehaviour
     {
         //持ち主を確定
         _owner = biome;
-
+        Debug.LogError($"{biome}");
         object[] parameters = { playerIdx, "Hand" };
         SetImage();
         _view.RPC(nameof(SetCardToDeck), RpcTarget.All, parameters);
@@ -137,11 +137,31 @@ public class CardController : MonoBehaviour
         var sprites = Resources.LoadAll<Sprite>("Sprites/Cards");
         print($"Set sprite {_card.ToString()} to image");
         if (sprites.Length == 0) Debug.LogError("Failed to load image");
-        var sprite = Array.Find<Sprite>(sprites, s => s.name == _card.Suit.ToString() + " " + _card.Number.ToString("00"));
+
+        string suitName = "";
+        switch (_card.Suit)
+        {
+            case Biome.Snowfield:
+                suitName = "Clover";
+                break;
+            case Biome.Ocean:
+                suitName = "Diamond";
+                break;
+            case Biome.Savannah:
+                suitName = "Heart";
+                break;
+            case Biome.Forest:
+                suitName = "Spade";
+                break;
+        }
+
+
+        var sprite = Array.Find<Sprite>(sprites, s => s.name == suitName + " " + _card.Number.ToString("00"));
+
 
         if (!sprite)
         {
-            Debug.LogError("not found");
+            Debug.LogError($"not found.cardSuit{_card}");
         }
         _image.sprite = sprite;
     }
