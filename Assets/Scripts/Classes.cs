@@ -1,8 +1,9 @@
-public struct Card
+public class Card
 {
 	public Biome Suit;
 	public int Number; 
 	public CardType Type;
+	public bool usedByRole;
 
 	public Card(Biome suit, int number)
     {
@@ -31,7 +32,7 @@ public struct Card
         }
 		else if(Number == 14)
         {
-
+			Type = CardType.Joker;
         }
 	}
 
