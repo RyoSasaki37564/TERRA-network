@@ -4,15 +4,23 @@ using UnityEngine;
 
 public class TradeDemo : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    [SerializeField] GameObject _tradePannel;
+    public bool _isEnd;
+
+
+    private void Start()
     {
-        
+        _tradePannel.SetActive(false);
     }
 
-    // Update is called once per frame
-    void Update()
+    //ボタンから呼び出す前提
+    public void TradeON()
     {
-        
+        _tradePannel.SetActive(true);
+    }
+
+    public void TradeOrder(int num, Biome biome, int orderPlayerID)
+    {
+
     }
 }

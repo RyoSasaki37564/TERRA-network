@@ -1,42 +1,40 @@
-public struct Card
+public class Card
 {
-    public Biome Suit;
-    public int Number;
-    public CardType Type;
+	public Biome Suit;
+	public int Number; 
+	public CardType Type;
+	public bool usedByRole;
 
-    /// <summary>
-    /// カードのバイオームと数字を初期化するコンストラクタ
-    /// </summary>
-    public Card(Biome suit, int number)
+	public Card(Biome suit, int number)
     {
-        Suit = suit;
-        Number = number;
-        Type = CardType.Plant;
-        if (Number > 4 && Number <= 7)
+		Suit = suit;
+		Number = number;
+		Type = CardType.Plant;
+		if(Number > 4 && Number <= 7)
         {
-            Type = CardType.Prey;
-        }
-        else if (Number > 7 && Number <= 9)
+			Type = CardType.Prey;
+		}
+		else if(Number > 7 && Number <= 9)
         {
-            Type = CardType.Predator;
+			Type = CardType.Predator;
         }
-        else if (Number == 10)
+		else if(Number == 10)
         {
-            Type = CardType.PredatorTheTop;
+			Type = CardType.PredatorTheTop;
         }
-        else if (Number == 11)
+		else if(Number == 11)
         {
-            Type = CardType.Disaster;
+			Type = CardType.Disaster;
         }
-        else if (Number == 12)
+		else if(Number == 12)
         {
-            Type = CardType.Ark;
+			Type = CardType.Ark;
         }
-        else if (Number == 14)
+		else if(Number == 14)
         {
-
+			Type = CardType.Joker;
         }
-    }
+	}
 
     public override string ToString()
     {
@@ -44,29 +42,28 @@ public struct Card
     }
 }
 
-public enum Biome : int
+public enum Biome
 {
-    None = -1,
-    Savannah = 0,
-    Snowfield = 1,
-    Forest = 2,
-    Ocean = 3
+	Savannah,
+	Snowfield,
+	Forest,
+	Ocean
 }
 public enum CardType
 {
-    /// <summary> 植物 </summary>
-    Plant,
-    /// <summary> 被食者 </summary>
-    Prey,
-    /// <summary> 捕食者 </summary>
-    Predator,
-    /// <summary> 頂点捕食者 </summary>
-    PredatorTheTop,
-    /// <summary> 災害 </summary>
-    Disaster,
-    /// <summary> 方舟 </summary>
-    Ark,
-    /// <summary> ジョーカー summary>
+	/// <summary> 植物 </summary>
+	Plant,
+	/// <summary> 被食者 </summary>
+	Prey, 
+	/// <summary> 捕食者 </summary>
+	Predator, 
+	/// <summary> 頂点捕食者 </summary>
+	PredatorTheTop, 
+	/// <summary> 災害 </summary>
+	Disaster, 
+	/// <summary> 方舟 </summary>
+	Ark,
+	/// <summary> ジョーカー summary>
     Joker
 }
 
@@ -76,9 +73,9 @@ public enum CardType
 /// </summary>
 public enum GameEvent : byte
 {
-    Start = 10,
-    Draw = 20,
-    Distribute = 30,
-    Discard = 40,
-    End = 50,
+	Start = 10,
+	Draw = 20,
+	Distribute = 30,
+	Discard = 40,
+	End = 50,
 }
