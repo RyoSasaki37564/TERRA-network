@@ -46,7 +46,6 @@ public struct Card
 
 public enum Biome : int
 {
-    None = -1,
     Savannah = 0,
     Snowfield = 1,
     Forest = 2,

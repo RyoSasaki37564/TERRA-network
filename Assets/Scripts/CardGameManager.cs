@@ -22,12 +22,17 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
     List<Card> _hand = new List<Card>();
     /// <summary>捨てた札。各クライアントが管理する。</summary>
     List<Card> _discard = new List<Card>();
+    /// <summary>シーン上にあるカードオブジェクト。</summary>
+    List<Image> _allCardObjects = new List<Image>();
+
     /// <summary>自分が何番目のプレイヤーか（0スタート。途中抜けを考慮していない）</summary>
     int _playerIndex = -1;
-    Biome _playerBiome = Biome.None;
+    Biome _playerBiome ;
     public Biome PlayerBiome => _playerBiome;
     /// <summary>現在何番目のプレイヤーが操作をしているか（0スタート。途中抜けを考慮していない）</summary>
     int _activePlayerIndex = -1;
+
+    bool _isInit = false;
 
     /// <summary>
     /// 山札を準備し、シャッフルする
@@ -35,9 +40,6 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
     public void InitializeCards()
     {
         Debug.Log("Initialize Game...");
-        _playerIndex = Array.IndexOf(PhotonNetwork.PlayerList, PhotonNetwork.LocalPlayer);
-        _playerBiome = (Biome)_playerIndex;
-        Debug.Log("Shuffle Cards.");
         var allsuits = (Biome[]) Enum.GetValues(typeof(Biome));
 
         foreach (var suit in allsuits)//全通りのカードを山札にAdd
@@ -102,6 +104,14 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
     /// <param name="turn">ターン番号 (1, 2, 3, ...)</param>
     void IPunTurnManagerCallbacks.OnTurnBegins(int turn)
     {
+        if (!_isInit)
+        {
+            _playerIndex = Array.IndexOf(PhotonNetwork.PlayerList, PhotonNetwork.LocalPlayer);
+            _playerBiome = (Biome)_playerIndex;
+            //Debug.LogError($"Shuffle Cards.番号：{_playerIndex}バイオーム：{_playerBiome}");
+            _isInit = true;
+        }
+
         Debug.LogFormat("OnTurnBegins {0}", turn);
         _activePlayerIndex = 0;
 
@@ -122,7 +132,15 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
             Distribute(PhotonNetwork.PlayerList[_activePlayerIndex].ActorNumber);
         }
 
-        // TODO: 順番のプレイヤーは操作できるように、順番以外のプレイヤーは操作できないようにする（パネルでクリックを塞いでしまえばよい）
+        //順番のプレイヤーは操作できるように、順番以外のプレイヤーは操作できないようにする（パネルでクリックを塞いでしまえばよい）
+        if (_activePlayerIndex != _playerIndex)
+        {
+            _allCardObjects.ForEach(c => c.raycastTarget = false);
+        }
+        else
+        {
+            _allCardObjects.ForEach(c => c.raycastTarget = true);
+        }
     }
 
     /// <summary>
@@ -205,6 +223,7 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
             // カードを手札に加える
             _hand.Add(card);
             var go = PhotonNetwork.Instantiate("Card", Vector3.zero, Quaternion.identity);
+            _allCardObjects.Add(go.GetComponent<Image>());
             var cardController = go.GetComponent<CardController>();
             cardController.SetImage(card);
             cardController.SetCardToHand(PhotonNetwork.LocalPlayer.ActorNumber,_playerBiome);
