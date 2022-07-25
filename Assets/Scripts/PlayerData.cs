@@ -4,15 +4,16 @@ using UnityEngine;
 
 public class PlayerData : MonoBehaviour
 {
-    public Biome _biome;
+    public Biome getBiome { get; }
+    Biome _biome;
 
     List<DamyRole> _list = new List<DamyRole>();
 
-    public void StandUp(int b)
+    public void StandUp(int playerID)
     {
-        if(b >= 0 && b <= 3)
+        if(playerID >= 0 && playerID <= 3)
         {
-            _biome = (Biome)b;
+            _biome = (Biome)playerID;
         }
         else
         {
