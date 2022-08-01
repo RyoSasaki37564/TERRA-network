@@ -17,7 +17,7 @@ public class ForestOcean : RoleBase
             _init = true;
         }
     }
-    public override void HandsCheck(Card card)
+    public override int HandsCheck(Card card)
     {
         for (int i = 0; i < _cards.Count;i++)
         {
@@ -41,8 +41,9 @@ public class ForestOcean : RoleBase
                 //TODO:‚±‚±‚É‰Á“_ˆ—‚ð‘‚­
                 unUse.ForEach(x => x.usedByRole = true);
                 _memberCount = 0;
+                return _point;
             }
         }
-        
+        return 0;
     }
 }
