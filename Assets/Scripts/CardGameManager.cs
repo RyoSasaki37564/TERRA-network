@@ -226,7 +226,7 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
             _allCardObjects.Add(go.GetComponent<Image>());
             var cardController = go.GetComponent<CardController>();
             cardController.SetImage(card);
-            cardController.SetCardToHand(PhotonNetwork.LocalPlayer.ActorNumber,_playerBiome);
+            cardController.SetCardToHand(PhotonNetwork.LocalPlayer.ActorNumber);
         }
     }
 
