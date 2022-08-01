@@ -16,5 +16,5 @@ public abstract class RoleBase
     {
 
     }
-    public abstract void HandsCheck(Card cards);
+    public abstract int HandsCheck(Card cards);
 }
