@@ -16,6 +16,9 @@ using Photon.Pun.UtilityScripts;
 [RequireComponent(typeof(PunTurnManager))]
 public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbacks, IOnEventCallback
 {
+    [SerializeField]
+    Text _turnText = null;
+
     /// <summary>山札。マスタークライアントが管理する。</summary>
     List<Card> _stock = new List<Card>();
     /// <summary>手札。各クライアントが管理する。</summary>
@@ -40,6 +43,7 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
     public void InitializeCards()
     {
         Debug.Log("Initialize Game...");
+
         var allsuits = (Biome[]) Enum.GetValues(typeof(Biome));
 
         foreach (var suit in allsuits)//全通りのカードを山札にAdd
@@ -106,6 +110,8 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
     {
         if (!_isInit)
         {
+            _turnText = FindObjectOfType<Text>();
+            _turnText.text = 0.ToString();
             _playerIndex = Array.IndexOf(PhotonNetwork.PlayerList, PhotonNetwork.LocalPlayer);
             _playerBiome = (Biome)_playerIndex;
             //Debug.LogError($"Shuffle Cards.番号：{_playerIndex}バイオーム：{_playerBiome}");
@@ -114,7 +120,7 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
 
         Debug.LogFormat("OnTurnBegins {0}", turn);
         _activePlayerIndex = 0;
-
+        _turnText.text = turn.ToString();
         if (turn == 1 && PhotonNetwork.IsMasterClient)
         {
             InitializeCards();
@@ -160,6 +166,14 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
         }
 
         // TODO: 順番のプレイヤーは操作できるように、順番以外のプレイヤーは操作できないようにする（パネルでクリックを塞いでしまえばよい）
+        if (_activePlayerIndex != _playerIndex)
+        {
+            _allCardObjects.ForEach(c => c.raycastTarget = false);
+        }
+        else
+        {
+            _allCardObjects.ForEach(c => c.raycastTarget = true);
+        }
     }
 
     /// <summary>
@@ -226,7 +240,7 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
             _allCardObjects.Add(go.GetComponent<Image>());
             var cardController = go.GetComponent<CardController>();
             cardController.SetImage(card);
-            cardController.SetCardToHand(PhotonNetwork.LocalPlayer.ActorNumber,_playerBiome);
+            cardController.SetCardToHand(PhotonNetwork.LocalPlayer.ActorNumber);
         }
     }
 
