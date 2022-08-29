@@ -5,7 +5,10 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/GameScene.unity
     guid: af22459a3f46eb6489323eb81e7a5e0f
+  - enabled: 1
+    path: Assets/Sasaki/SasakiGameScene.unity
+    guid: 4b0721c61be2f034c8494aba5d01a002
   m_configObjects: {}

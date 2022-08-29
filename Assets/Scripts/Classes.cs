@@ -77,5 +77,6 @@ public enum GameEvent : byte
 	Draw = 20,
 	Distribute = 30,
 	Discard = 40,
+	TradeOrder = 41,
 	End = 50,
 }
