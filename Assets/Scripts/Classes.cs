@@ -48,10 +48,10 @@ public class Card
 
 public enum Biome
 {
-	Savannah,
-	Snowfield,
-	Forest,
-	Ocean
+	Savannah = 1,
+	Snowfield = 2,
+	Forest = 3,
+	Ocean = 4
 }
 public enum CardType
 {

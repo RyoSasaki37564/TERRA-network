@@ -23,7 +23,7 @@ public class CardController : MonoBehaviour
     PhotonView _view;
 
     bool _discarded = false;
-    Biome _owner ;
+    //Biome _owner;
 
     void Awake()
     {
@@ -39,7 +39,7 @@ public class CardController : MonoBehaviour
         var go = GameObject.FindGameObjectWithTag("GameController");
         var cardGameManager = go.GetComponent<CardGameManager>();
         var turnManager = go.GetComponent<PunTurnManager>();
-        if (_discarded || _owner != cardGameManager.PlayerBiome)
+        if (_discarded)
         {
             return;
         }
@@ -58,12 +58,10 @@ public class CardController : MonoBehaviour
     /// カードを手札にセットする
     /// </summary>
     /// <param name="playerIdx">プレイヤーのID（ActorNumber）</param>
-    public void SetCardToHand(int playerIdx,Biome biome)
+    public void SetCardToHand(int playerIdx)
     {
-        //持ち主を確定
-        _owner = biome;
-        Debug.LogError($"{biome}");
         object[] parameters = { playerIdx, "Hand" };
+        //自分だけ見える
         SetImage();
         _view.RPC(nameof(SetCardToDeck), RpcTarget.All, parameters);
     }
@@ -74,9 +72,10 @@ public class CardController : MonoBehaviour
     /// <param name="playerIdx">プレイヤーのID（ActorNumber）</param>
     public void SetCardToDiscard(int playerIdx)
     {
-        object[] parameters = { playerIdx, "Discard" };
         //①メソッド名、②呼び出しのターゲット、③①の引数
+        object[] parameters = { playerIdx, "Discard" };
         _view.RPC(nameof(SetCardToDeck), RpcTarget.All, parameters);
+        //捨てるときに他の人にも見せる
         object[] parameters2 = { _card.Suit.ToString(), _card.Number };
         _view.RPC(nameof(SetImage), RpcTarget.All, parameters2);
     }
@@ -89,6 +88,10 @@ public class CardController : MonoBehaviour
     [PunRPC]
     void SetCardToDeck(int playerIdx, string handOrDiscard)
     {
+
+        //持ち主を確定
+        //_owner = (Biome)playerIdx;
+
         var deck = GameObject.Find(handOrDiscard + " " + playerIdx);
 
         if (deck)
