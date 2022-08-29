@@ -23,7 +23,7 @@ public class CardController : MonoBehaviour
     PhotonView _view;
 
     bool _discarded = false;
-    Biome _owner;
+    //Biome _owner;
 
     void Awake()
     {
@@ -39,7 +39,7 @@ public class CardController : MonoBehaviour
         var go = GameObject.FindGameObjectWithTag("GameController");
         var cardGameManager = go.GetComponent<CardGameManager>();
         var turnManager = go.GetComponent<PunTurnManager>();
-        if (_discarded || (int)_owner != PhotonNetwork.LocalPlayer.ActorNumber)
+        if (_discarded)
         {
             return;
         }
@@ -90,7 +90,7 @@ public class CardController : MonoBehaviour
     {
 
         //持ち主を確定
-        _owner = (Biome)playerIdx;
+        //_owner = (Biome)playerIdx;
 
         var deck = GameObject.Find(handOrDiscard + " " + playerIdx);
 
