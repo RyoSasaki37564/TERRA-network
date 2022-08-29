@@ -30,7 +30,11 @@ public class Card
         {
 			Type = CardType.Ark;
         }
-		else if(Number == 14)
+		else if(Number == 13)
+        {
+			Type = CardType.Continent;
+        }
+		else
         {
 			Type = CardType.Joker;
         }
@@ -63,8 +67,10 @@ public enum CardType
 	Disaster, 
 	/// <summary> 方舟 </summary>
 	Ark,
+	/// <summary> 大陸 </summary>
+	Continent,
 	/// <summary> ジョーカー summary>
-    Joker
+	Joker
 }
 
 

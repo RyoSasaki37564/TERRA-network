@@ -4,13 +4,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ForestOcean : RoleBase
+public class ForestOcean : PokarHandBase
 {
     int _suitCount = 0;
     int _suitCountLine = 0;
     public ForestOcean()
     {
-        if(!_init)
+        if (!_init)
         {
             _point = 55;
             _memberCountLine = 5;
@@ -19,30 +19,39 @@ public class ForestOcean : RoleBase
     }
     public override int HandsCheck(Card card)
     {
-        for (int i = 0; i < _cards.Count;i++)
+        if (_cards.Count == 0)
         {
             switch (card.Type)
             {
                 case CardType.Plant:
-                    if (_cards[i] == null)
-                    {
-                        _cards[i] = card;
-                    }
+                    _cards.Add(card);
+                    _memberCount++;
                     break;
-                default:break;
+                default: break;
             }
+        }
+        else
+        {
+            //for (int i = 0; i < _cards.Count; i++)
+            //{
+                switch (card.Type)
+                {
+                    case CardType.Plant:
+                        if (!_cards.Contains(card))
+                        {
+                            _cards.Add(card); ;
+                            _memberCount++;
+                        }
+                        break;
+                    default: break;
+                }
 
-            
-            if(_memberCount == _memberCountLine)
-            {
-                var arrayBase = _cards.ToArray();
-                _cardsCopy.CopyTo(arrayBase, _cardsCopy.Count);
-                var unUse = _cardsCopy.Where(x => x.usedByRole == false).ToList();
-                //TODO:‚±‚±‚É‰Á“_ˆ—‚ð‘‚­
-                unUse.ForEach(x => x.usedByRole = true);
-                _memberCount = 0;
-                return _point;
-            }
+                if (_memberCount == _memberCountLine)
+                {
+                    _memberCount = 0;
+                    return _point;
+                }
+            //}
         }
         return 0;
     }

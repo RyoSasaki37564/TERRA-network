@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class RoleBase
+public abstract class PokarHandBase
 {
     protected List<Card> _cards = new List<Card>();
     protected List<Card> _cardsCopy;
