@@ -17,10 +17,12 @@ public class TradeDemo : MonoBehaviourPunCallbacks, IOnEventCallback
 
     [SerializeField] Dropdown[] _dDs;
     [SerializeField] Text _onOffButtonText;
+    TradeWaiterDemo _twd;
 
     private void Start()
     {
         _tradePannel.SetActive(false);
+        _twd = FindObjectOfType<TradeWaiterDemo>().GetComponent<TradeWaiterDemo>();
     }
 
     //ボタンから呼び出す前提
@@ -56,13 +58,13 @@ public class TradeDemo : MonoBehaviourPunCallbacks, IOnEventCallback
         RaiseEventOptions eventOptions = new RaiseEventOptions();
         eventOptions.TargetActors = new int[] { _targetPlayerNum };
         SendOptions sendOptions = new SendOptions();
-        sendOptions.Encrypt = true;
+        //sendOptions.Encrypt = true;
         object[] content = new object[] { card.Suit.ToString(), card.Number.ToString() };
         Debug.Log($"Raise Event ID:{GameEvent.TradeOrder.ToString()}, Suit: {card.Suit.ToString()}, Number: {card.Number}, TargetActor: {_targetPlayerNum}");
         PhotonNetwork.RaiseEvent((byte)GameEvent.TradeOrder, content, eventOptions, sendOptions);
     }
 
-    public void OnEvent(EventData photonEvent)
+    void IOnEventCallback.OnEvent(EventData photonEvent)
     {
         if (photonEvent.Code > 200) return;
 
@@ -74,10 +76,9 @@ public class TradeDemo : MonoBehaviourPunCallbacks, IOnEventCallback
             Biome s = (Biome)Enum.Parse(typeof(Biome), suit);
             Card card = new Card(s, int.Parse(number));
 
-            TradeWaiterDemo twd = FindObjectOfType<TradeWaiterDemo>().GetComponent<TradeWaiterDemo>();
             if (card.Number == 13)
             {
-                twd.CommentAdd(" Joker ");
+                _twd.CommentAdd(" Joker ");
                 Debug.Log(" Joker ");
             }
             else
@@ -99,7 +100,7 @@ public class TradeDemo : MonoBehaviourPunCallbacks, IOnEventCallback
                 {
                     n = "All";
                 }
-                twd.CommentAdd($"{b} / {n} ");
+                _twd.CommentAdd($"{b} / {n} ");
                 Debug.Log($"{b} / {n} ");
             }
 
@@ -108,10 +109,9 @@ public class TradeDemo : MonoBehaviourPunCallbacks, IOnEventCallback
 
     public void OrderTest()
     {
-        TradeWaiterDemo twd = FindObjectOfType<TradeWaiterDemo>().GetComponent<TradeWaiterDemo>();
         if (_targetCardNum == 13)
         {
-            twd.CommentAdd(" Joker ");
+            _twd.CommentAdd(" Joker ");
             Debug.Log(" Joker ");
         }
         else
@@ -133,7 +133,7 @@ public class TradeDemo : MonoBehaviourPunCallbacks, IOnEventCallback
             {
                 n = "All";
             }
-            twd.CommentAdd($"{b} / {n} ");
+            _twd.CommentAdd($"{b} / {n} ");
             Debug.Log($"{b} / {n} ");
         }
     }
