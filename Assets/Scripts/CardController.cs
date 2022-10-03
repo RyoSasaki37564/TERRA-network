@@ -41,7 +41,7 @@ public class CardController : MonoBehaviour
         var go = GameObject.FindGameObjectWithTag("GameController");
         var cardGameManager = go.GetComponent<CardGameManager>();
         var turnManager = go.GetComponent<PunTurnManager>();
-        if (_discarded)
+        if (_discarded || cardGameManager.PlayerBiome != _owner)
         {
             return;
         }
