@@ -36,6 +36,7 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
     int _activePlayerIndex = -1;
 
     bool _isInit = false;
+    public bool IsClientTurn { get { return _activePlayerIndex == _playerIndex; } }
 
     /// <summary>
     /// 山札を準備し、シャッフルする
@@ -152,7 +153,6 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
             {
                 card.raycastTarget = true;
             }
-            Debug.LogError($"{_playerBiome}のターン");
         }
     }
 
