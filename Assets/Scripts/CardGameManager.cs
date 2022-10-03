@@ -30,12 +30,13 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
 
     /// <summary>自分が何番目のプレイヤーか（0スタート。途中抜けを考慮していない）</summary>
     int _playerIndex = -1;
-    Biome _playerBiome ;
+    Biome _playerBiome;
     public Biome PlayerBiome => _playerBiome;
     /// <summary>現在何番目のプレイヤーが操作をしているか（0スタート。途中抜けを考慮していない）</summary>
     int _activePlayerIndex = -1;
 
     bool _isInit = false;
+    public bool IsClientTurn { get { return _activePlayerIndex == _playerIndex; } }
 
     /// <summary>
     /// 山札を準備し、シャッフルする
@@ -44,7 +45,7 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
     {
         Debug.Log("Initialize Game...");
 
-        var allsuits = (Biome[]) Enum.GetValues(typeof(Biome));
+        var allsuits = (Biome[])Enum.GetValues(typeof(Biome));
 
         foreach (var suit in allsuits)//全通りのカードを山札にAdd
         {
@@ -110,16 +111,19 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
     {
         if (!_isInit)
         {
-            _turnText = FindObjectOfType<Text>();
+            _turnText = GameObject.Find("TurnText").GetComponent<Text>();
             _turnText.text = 0.ToString();
             _playerIndex = Array.IndexOf(PhotonNetwork.PlayerList, PhotonNetwork.LocalPlayer);
-            _playerBiome = (Biome)_playerIndex;
+            _playerBiome = (Biome)_playerIndex + 1;
+            Text biomeText = GameObject.Find("BiomeText").GetComponent<Text>();
+            biomeText.text = _playerBiome.ToString();
             //Debug.LogError($"Shuffle Cards.番号：{_playerIndex}バイオーム：{_playerBiome}");
             _isInit = true;
+            _activePlayerIndex = (0) % PhotonNetwork.CurrentRoom.PlayerCount;
         }
 
-        Debug.LogFormat("OnTurnBegins {0}", turn);
-        _activePlayerIndex = 0;
+        Debug.LogFormat("ターン開始 現在のターン数：{0}", turn);
+
         _turnText.text = turn.ToString();
         if (turn == 1 && PhotonNetwork.IsMasterClient)
         {
@@ -138,14 +142,17 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
             Distribute(PhotonNetwork.PlayerList[_activePlayerIndex].ActorNumber);
         }
 
+        Debug.Log($"現在アクティブなプレイヤー{_activePlayerIndex},クライアントID{_playerIndex}");
         //順番のプレイヤーは操作できるように、順番以外のプレイヤーは操作できないようにする（パネルでクリックを塞いでしまえばよい）
-        if (_activePlayerIndex != _playerIndex)
+
+        _allCardObjects.ForEach(c => c.raycastTarget = false);
+        if (_activePlayerIndex == _playerIndex)
         {
-            _allCardObjects.ForEach(c => c.raycastTarget = false);
-        }
-        else
-        {
-            _allCardObjects.ForEach(c => c.raycastTarget = true);
+            var cards = _allCardObjects.Where(c => c.gameObject.GetComponent<CardController>().Owner == _playerBiome);
+            foreach (var card in cards)
+            {
+                card.raycastTarget = true;
+            }
         }
     }
 
@@ -166,14 +173,14 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
         }
 
         // TODO: 順番のプレイヤーは操作できるように、順番以外のプレイヤーは操作できないようにする（パネルでクリックを塞いでしまえばよい）
-        if (_activePlayerIndex != _playerIndex)
-        {
-            _allCardObjects.ForEach(c => c.raycastTarget = false);
-        }
-        else
-        {
-            _allCardObjects.ForEach(c => c.raycastTarget = true);
-        }
+        //if (_activePlayerIndex != _playerIndex)
+        //{
+        //    _allCardObjects.ForEach(c => c.raycastTarget = false);
+        //}
+        //else
+        //{
+        //    _allCardObjects.ForEach(c => c.raycastTarget = true);
+        //}
     }
 
     /// <summary>
