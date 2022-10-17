@@ -96,15 +96,6 @@ public class CardController : MonoBehaviour
 
         var deck = GameObject.Find(handOrDiscard + " " + playerIdx);
 
-        if (deck)
-        {
-            Debug.Log($"{deck.name} found.");
-        }
-        else
-        {
-            Debug.LogError($"{deck.name} not found.");
-        }
-
         transform.SetParent(deck.transform);
         transform.localScale = Vector3.one;
         transform.localRotation = Quaternion.identity;
@@ -166,7 +157,7 @@ public class CardController : MonoBehaviour
 
         if (!sprite)
         {
-            Debug.LogError($"not found.cardSuit{_card}");
+            Debug.LogError($"{_card}のカードが見つかりませんでした。");
         }
         _image.sprite = sprite;
     }
