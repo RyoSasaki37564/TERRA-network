@@ -28,6 +28,12 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
     /// <summary>シーン上にあるカードオブジェクト。</summary>
     List<Image> _allCardObjects = new List<Image>();
 
+    [SerializeField, Tooltip("クライアントのスコアを表示するテキスト")]
+    Text _scoreText = null;
+    int _score = 0;
+    [SerializeField]
+    PokerJudgeManager _judgeManager = null;
+
     /// <summary>自分が何番目のプレイヤーか（0スタート。途中抜けを考慮していない）</summary>
     int _playerIndex = -1;
     Biome _playerBiome;
@@ -43,7 +49,7 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
     /// </summary>
     public void InitializeCards()
     {
-        Debug.Log("Initialize Game...");
+        Debug.Log("ゲーム初期化");
 
         var allsuits = (Biome[])Enum.GetValues(typeof(Biome));
 
@@ -81,13 +87,14 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
         var card = _stock[UnityEngine.Random.Range(0, _stock.Count)];
         // 山から削除する
         _stock.Remove(card);
+
         // 対象のクライアントに引いたカードを通知する
         RaiseEventOptions eventOptions = new RaiseEventOptions();
         eventOptions.TargetActors = new int[] { actorNumber };
         SendOptions sendOptions = new SendOptions();
         sendOptions.Encrypt = true;
         object[] content = new object[] { card.Suit.ToString(), card.Number.ToString() };
-        Debug.Log($"Raise Event ID:{GameEvent.Distribute.ToString()}, Suit: {card.Suit.ToString()}, Number: {card.Number}, TargetActor: {actorNumber}");
+        Debug.Log($"カードを配った:{GameEvent.Distribute.ToString()}, 絵柄: {card.Suit.ToString()}, 番号: {card.Number}, ターゲットID: {actorNumber}");
         PhotonNetwork.RaiseEvent((byte)GameEvent.Distribute, content, eventOptions, sendOptions);
     }
 
@@ -97,6 +104,9 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
     /// <param name="card"></param>
     public void Discard(Card card)
     {
+        //役判定してスコアを加算。
+        _score += _judgeManager.Judge(card);
+        _scoreText.text = _score.ToString();
         _hand.Remove(card);
         _discard.Add(card);
     }
@@ -111,6 +121,13 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
     {
         if (!_isInit)
         {
+            //スコアテキストの表示を初期化
+            _scoreText.text = _score.ToString();
+            //コンポーネント取得
+            if (!_judgeManager)
+            {
+                _judgeManager = FindObjectOfType<PokerJudgeManager>();
+            }
             _turnText = GameObject.Find("TurnText").GetComponent<Text>();
             _turnText.text = 0.ToString();
             _playerIndex = Array.IndexOf(PhotonNetwork.PlayerList, PhotonNetwork.LocalPlayer);
@@ -141,8 +158,6 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
             // 最初のプレイヤーに札を配る
             Distribute(PhotonNetwork.PlayerList[_activePlayerIndex].ActorNumber);
         }
-
-        Debug.Log($"現在アクティブなプレイヤー{_activePlayerIndex},クライアントID{_playerIndex}");
         //順番のプレイヤーは操作できるように、順番以外のプレイヤーは操作できないようにする（パネルでクリックを塞いでしまえばよい）
 
         _allCardObjects.ForEach(c => c.raycastTarget = false);
@@ -164,7 +179,7 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
     /// <param name="move">プレイヤーが送ったメッセージ</param>
     void IPunTurnManagerCallbacks.OnPlayerFinished(Photon.Realtime.Player player, int turn, object move)
     {
-        Debug.LogFormat($"OnPlayerFinished from Player: {player.ActorNumber}, move: {move}, for turn: {turn}");
+        Debug.LogFormat($"行動終了したプレイヤー: {player.ActorNumber}, move: {move}, ターン数: {turn}");
         _activePlayerIndex = (_activePlayerIndex + 1) % PhotonNetwork.CurrentRoom.PlayerCount;
         // 順番のプレイヤーに札を配る
         if (PhotonNetwork.IsMasterClient)
@@ -191,7 +206,7 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
     /// <param name="move">プレイヤーが送ったメッセージ</param>
     void IPunTurnManagerCallbacks.OnPlayerMove(Photon.Realtime.Player player, int turn, object move)
     {
-        Debug.LogFormat($"OnPlayerMove received from Player: {player.ActorNumber}, move: {move.ToString()} for turn {turn}");
+        Debug.LogFormat($"行動を送ったプレイヤー: {player.ActorNumber}, move: {move.ToString()} ターン数 {turn}");
         //this.OnPlayerMove(move);
     }
 
@@ -201,7 +216,7 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
     /// <param name="turn">ターン番号</param>
     void IPunTurnManagerCallbacks.OnTurnCompleted(int turn)
     {
-        Debug.LogFormat("OnTurnCompleted {0}", turn);
+        Debug.LogFormat("{0}ターン目が終了", turn);
         // 新たなターンを開始する
         PunTurnManager turnManager = GameObject.FindObjectOfType<PunTurnManager>();
         turnManager.BeginTurn();
@@ -213,7 +228,7 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
     /// <param name="turn"></param>
     void IPunTurnManagerCallbacks.OnTurnTimeEnds(int turn)
     {
-        Debug.LogFormat("OnTurnTimeEnds {0}", turn);
+        Debug.LogFormat("{0}ターン目が時間切れで終了。", turn);
         // 新たなターンを開始する
         PunTurnManager turnManager = GameObject.FindObjectOfType<PunTurnManager>();
         turnManager.BeginTurn();
@@ -238,7 +253,7 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
         {
             string suit = ((object[])photonEvent.CustomData)[0].ToString();
             string number = ((object[])photonEvent.CustomData)[1].ToString();
-            Debug.Log($"Event Received. Code: Distribute, Suit: {suit}, Number: {number}");
+            Debug.Log($"カードを配った, 絵柄: {suit}, 番号: {number}");
             Biome s = (Biome)Enum.Parse(typeof(Biome), suit);
             Card card = new Card(s, int.Parse(number));
             // カードを手札に加える
