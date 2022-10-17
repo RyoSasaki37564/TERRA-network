@@ -34,7 +34,7 @@ public class Card
         {
 			Type = CardType.Continent;
         }
-		else
+		else if(Number > 13)
         {
 			Type = CardType.Joker;
         }
