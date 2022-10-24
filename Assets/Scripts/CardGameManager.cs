@@ -30,12 +30,16 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
 
     [SerializeField, Tooltip("クライアントのスコアを表示するテキスト")]
     Text _scoreText = null;
+    //プレイヤーのスコア
     int _score = 0;
-    [SerializeField]
+    [SerializeField,Tooltip("役判定のコンポーネント")]
     PokerJudgeManager _judgeManager = null;
+    [SerializeField, Tooltip("勝利判定のテキスト")]
+    Text _resultText = null;
 
     /// <summary>自分が何番目のプレイヤーか（0スタート。途中抜けを考慮していない）</summary>
     int _playerIndex = -1;
+    /// <summary>クライアントのバイオーム</summary>
     Biome _playerBiome;
     public Biome PlayerBiome => _playerBiome;
     /// <summary>現在何番目のプレイヤーが操作をしているか（0スタート。途中抜けを考慮していない）</summary>
@@ -123,26 +127,44 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
     {
         if (!_isInit)
         {
-            //スコアテキストの表示を初期化
             _scoreText.text = _score.ToString();
-            //コンポーネント取得
-            if (!_judgeManager)
-            {
-                _judgeManager = FindObjectOfType<PokerJudgeManager>();
-            }
+            //役判定クラスのインスタンス取得
+            _judgeManager = InstaceComponent<PokerJudgeManager>("JudegeManager");
+
+            //ターンテキストのインスタンスを取得
             _turnText = GameObject.Find("TurnText").GetComponent<Text>();
+            if (!_turnText)
+            {
+                _turnText = InstaceComponent<Text>("TurnText");
+            }
             _turnText.text = 0.ToString();
+
+            _resultText = GameObject.Find("ResultText").GetComponent<Text>();
+            if (!_resultText)
+            {
+                _resultText = InstaceComponent<Text>("ResultText");
+            }
+            _resultText.gameObject.SetActive(false);
+
+            //PlayerIndexの初期化
             _playerIndex = Array.IndexOf(PhotonNetwork.PlayerList, PhotonNetwork.LocalPlayer);
+
+            //バイオームテキストの初期化
             _playerBiome = (Biome)_playerIndex + 1;
             Text biomeText = GameObject.Find("BiomeText").GetComponent<Text>();
+            if (!biomeText)
+            {
+                biomeText = InstaceComponent<Text>("BiomeText");
+            }
             biomeText.text = _playerBiome.ToString();
-            //Debug.LogError($"Shuffle Cards.番号：{_playerIndex}バイオーム：{_playerBiome}");
-            _isInit = true;
             _activePlayerIndex = (0) % PhotonNetwork.CurrentRoom.PlayerCount;
+
+            _isInit = true;          
         }
 
         Debug.LogFormat("ターン開始 現在のターン数：{0}", turn);
 
+        //ターンテキストの更新
         _turnText.text = turn.ToString();
         if (turn == 1 && PhotonNetwork.IsMasterClient)
         {
@@ -188,16 +210,6 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
         {
             Distribute(PhotonNetwork.PlayerList[_activePlayerIndex].ActorNumber);
         }
-
-        // TODO: 順番のプレイヤーは操作できるように、順番以外のプレイヤーは操作できないようにする（パネルでクリックを塞いでしまえばよい）
-        //if (_activePlayerIndex != _playerIndex)
-        //{
-        //    _allCardObjects.ForEach(c => c.raycastTarget = false);
-        //}
-        //else
-        //{
-        //    _allCardObjects.ForEach(c => c.raycastTarget = true);
-        //}
     }
 
     /// <summary>
@@ -233,7 +245,14 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
         Debug.LogFormat("{0}ターン目が時間切れで終了。", turn);
         // 新たなターンを開始する
         PunTurnManager turnManager = GameObject.FindObjectOfType<PunTurnManager>();
-        turnManager.BeginTurn();
+        if (_stock.Count<=0)
+        {
+            //TODO各クライアントの点数を比較してTextに表示する
+        }
+        else
+        {
+            turnManager.BeginTurn();
+        }      
     }
 
     #endregion
@@ -260,12 +279,19 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
             Card card = new Card(s, int.Parse(number));
             // カードを手札に加える
             _hand.Add(card);
+            //Photonで全てのクライアントでカードを生成
             var go = PhotonNetwork.Instantiate("Card", Vector3.zero, Quaternion.identity);
             _allCardObjects.Add(go.GetComponent<Image>());
             var cardController = go.GetComponent<CardController>();
             cardController.SetImage(card);
             cardController.SetCardToHand(PhotonNetwork.LocalPlayer.ActorNumber);
         }
+    }
+
+    componentType InstaceComponent<componentType>(string objectName) where componentType :Component
+    {
+        var go  = new GameObject(objectName);
+        return go.AddComponent<componentType>();
     }
 
     #endregion
