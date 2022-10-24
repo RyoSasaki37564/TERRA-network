@@ -45,7 +45,7 @@ public class Reduction : PokarHandBase
         }
         else
         {
-            if (_cards.Contains(card))
+            if (!_cards.Contains(card))
             {
                 switch (card.Type)
                 {
@@ -64,8 +64,12 @@ public class Reduction : PokarHandBase
                     default: break;
                 }
             }
-
         }
-        return _point;
+        if(_memberCount == _memberCountLine)
+        {
+            _memberCount = 0;
+            return _point;
+        }
+        return 0;
     }
 }
