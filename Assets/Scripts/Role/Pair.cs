@@ -14,7 +14,7 @@ public class Pair : PokarHandBase
         {
             return card.Number * 2;
         }
-        return 0;
+        return card.Number;
     }
 
     /// <summary>‘ÎÛ‚ª–ğ‚àŠÜ‚ß‚½‡Œv’l‚Ìê‡</summary>

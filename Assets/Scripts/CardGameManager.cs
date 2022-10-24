@@ -105,7 +105,9 @@ public class CardGameManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbac
     public void Discard(Card card)
     {
         //役判定してスコアを加算。
+        Debug.Log($"足される前{_score}");
         _score += _judgeManager.Judge(card);
+        Debug.Log($"足された後{_score}");
         _scoreText.text = _score.ToString();
         _hand.Remove(card);
         _discard.Add(card);
